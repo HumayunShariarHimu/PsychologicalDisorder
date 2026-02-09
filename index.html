@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Psyche Explorer | Deep Mind Pop-up</title>
+    <style>
+        :root {
+            --bg: #020617;
+            --glass: rgba(255, 255, 255, 0.02);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent-primary: #a855f7; /* Psychedelic Purple */
+            --accent-secondary: #0ea5e9; /* Neon Cyan */
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(168, 85, 247, 0.12) 0%, transparent 35%),
+                radial-gradient(circle at 85% 85%, rgba(14, 165, 233, 0.12) 0%, transparent 35%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding: 20px;
+            animation: fadeIn 1.5s ease;
+        }
+
+        header h1 {
+            font-size: 3.5rem;
+            margin: 0;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 15px rgba(168, 85, 247, 0.4));
+        }
+
+        /* Animated Search Box */
+        .search-wrapper {
+            position: relative;
+            margin-bottom: 40px;
+            border-radius: 20px;
+            padding: 2px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), var(--accent-primary));
+            background-size: 200% auto;
+            animation: borderFlow 4s linear infinite;
+        }
+
+        @keyframes borderFlow {
+            to { background-position: 200% center; }
+        }
+
+        #search {
+            width: 100%;
+            padding: 20px;
+            background: #0b1120;
+            border: none;
+            border-radius: 18px;
+            color: white;
+            font-size: 18px;
+            outline: none;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        #search:focus {
+            background: #0f172a;
+            box-shadow: inset 0 0 10px rgba(14, 165, 233, 0.2);
+        }
+
+        /* Grid Layout for Items */
+        #list-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            padding-bottom: 50px;
+        }
+
+        .disorder-card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .disorder-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, transparent, rgba(168, 85, 247, 0.05));
+            opacity: 0;
+            transition: 0.4s;
+        }
+
+        .disorder-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: var(--accent-secondary);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.8), 0 0 15px rgba(14, 165, 233, 0.1);
+        }
+
+        .disorder-card:hover::before { opacity: 1; }
+
+        .disorder-card h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--accent-secondary);
+            line-height: 1.4;
+        }
+
+        /* Modern Pop-up (Modal) Style */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(15px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .modal-content {
+            background: #0f172a;
+            width: 90%;
+            max-width: 650px;
+            max-height: 80vh;
+            border-radius: 30px;
+            position: relative;
+            padding: 40px;
+            border: 1px solid var(--accent-primary);
+            box-shadow: 0 0 50px rgba(168, 85, 247, 0.2);
+            overflow-y: auto;
+            transform: scale(0.8) translateY(30px);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
+
+        .close-btn {
+            position: absolute;
+            top: 20px; right: 20px;
+            width: 40px; height: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            color: var(--accent-secondary);
+            font-size: 24px;
+            transition: 0.3s;
+            border: 1px solid var(--glass-border);
+        }
+
+        .close-btn:hover {
+            background: #ef4444;
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        .modal-title {
+            color: var(--accent-primary);
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            padding-right: 40px;
+        }
+
+        .modal-body {
+            color: var(--text-dim);
+            line-height: 1.8;
+            font-size: 1.1rem;
+            text-align: justify;
+        }
+
+        /* Spinner */
+        .loader { padding: 100px; text-align: center; }
+        .spinner {
+            width: 60px; height: 60px;
+            border: 4px solid var(--glass-border);
+            border-top: 4px solid var(--accent-secondary);
+            border-radius: 50%;
+            animation: spin 1s infinite linear;
+            margin: 0 auto;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Scrollbar Style */
+        .modal-content::-webkit-scrollbar { width: 6px; }
+        .modal-content::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 10px; }
+
+        @media (max-width: 600px) {
+            header h1 { font-size: 2.2rem; }
+            .modal-content { padding: 25px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>PsycheExplorer</h1>
+            <p style="color: var(--text-dim); font-size: 1.1rem;">মনস্তাত্ত্বিক বৈচিত্র্যের গভীর অনুসন্ধান...</p>
+        </header>
+
+        <div class="search-wrapper">
+            <input type="text" id="search" placeholder="সাইকোসিস অনুসন্ধান...">
+        </div>
+
+        <div id="loader" class="loader">
+            <div class="spinner"></div>
+            <p style="margin-top: 20px; color: var(--accent-secondary); letter-spacing: 1px;">Data Loading...</p>
+        </div>
+        
+        <div id="list-container"></div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <div class="close-btn" id="closeBtn">&times;</div>
+            <h2 class="modal-title" id="modalTitle"></h2>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        const rawUrl = 'https://raw.githubusercontent.com/HumayunShariarHimu/PsychologicalDisorder/refs/heads/main/PsychologicalDisorders.txt';
+        let allData = [];
+
+        async function loadData() {
+            try {
+                const response = await fetch(rawUrl);
+                const text = await response.text();
+                
+                // Parsing logic for # character
+                const sections = text.split('#');
+                allData = sections.slice(1).map(section => {
+                    const lines = section.trim().split(/\n/);
+                    const title = lines[0].trim();
+                    const desc = section.replace(title, '').trim();
+                    return { title, desc };
+                });
+
+                document.getElementById('loader').style.display = 'none';
+                renderCards(allData);
+            } catch (error) {
+                document.getElementById('loader').innerHTML = `<p style="color: #ef4444">ডেটা লোড করা ব্যর্থ হয়েছে। ইন্টারনেট সংযোগ চেক করুন।</p>`;
+            }
+        }
+
+        function renderCards(data) {
+            const container = document.getElementById('list-container');
+            container.innerHTML = '';
+
+            data.forEach((item) => {
+                const card = document.createElement('div');
+                card.className = 'disorder-card';
+                card.innerHTML = `<h3>${item.title}</h3>`;
+                card.onclick = () => openModal(item);
+                container.appendChild(card);
+            });
+        }
+
+        // Modal Functions
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+
+        function openModal(item) {
+            modalTitle.innerText = item.title;
+            modalBody.innerText = item.desc;
+            modalOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Stop body scroll
+        }
+
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+            document.body.style.overflow = 'auto'; // Restore scroll
+        }
+
+        document.getElementById('closeBtn').onclick = closeModal;
+
+        // Close modal on clicking outside content
+        modalOverlay.onclick = (e) => {
+            if (e.target === modalOverlay) closeModal();
+        };
+
+        // Esc key to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // Search logic
+        document.getElementById('search').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = allData.filter(item => 
+                item.title.toLowerCase().includes(term) || 
+                item.desc.toLowerCase().includes(term)
+            );
+            renderCards(filtered);
+        });
+
+        loadData();
+    </script>
+</body>
+</html>
